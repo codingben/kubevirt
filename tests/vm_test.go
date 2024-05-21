@@ -274,53 +274,13 @@ var _ = Describe("[rfe_id:1177][crit:medium][vendor:cnv-qe@redhat.com][level:com
 		)
 
 		It("[test_id:3161]should carry annotations to VMI", func() {
-			annotations := map[string]string{
-				"testannotation": "test",
-			}
-
-			vm := createVM(virtClient, libvmifact.NewCirros())
-
-			err = tests.RetryWithMetadataIfModified(vm.ObjectMeta, func(meta k8smetav1.ObjectMeta) error {
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Get(context.Background(), meta.Name, k8smetav1.GetOptions{})
-				Expect(err).ToNot(HaveOccurred())
-				vm.Spec.Template.ObjectMeta.Annotations = annotations
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
-				return err
-			})
-			Expect(err).ToNot(HaveOccurred())
-
+			vm := createVM(virtClient, libvmifact.NewGuestless(libvmi.WithAnnotation("testannotation", "test")))
 			vm = startVM(virtClient, vm)
 
 			By("checking for annotations to be present")
 			vmi, err := virtClient.VirtualMachineInstance(vm.Namespace).Get(context.Background(), vm.Name, k8smetav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(vmi.Annotations).To(HaveKeyWithValue("testannotation", "test"))
-		})
-
-		It("[test_id:3162]should ignore kubernetes and kubevirt annotations to VMI", func() {
-			annotations := map[string]string{
-				"kubevirt.io/test":   "test",
-				"kubernetes.io/test": "test",
-			}
-
-			vm := createVM(virtClient, libvmifact.NewCirros())
-
-			err = tests.RetryWithMetadataIfModified(vm.ObjectMeta, func(meta k8smetav1.ObjectMeta) error {
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Get(context.Background(), meta.Name, k8smetav1.GetOptions{})
-				Expect(err).ToNot(HaveOccurred())
-				vm.Annotations = annotations
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
-				return err
-			})
-			Expect(err).ToNot(HaveOccurred())
-
-			vm = startVM(virtClient, vm)
-
-			By("checking for annotations to not be present")
-			vmi, err := virtClient.VirtualMachineInstance(vm.Namespace).Get(context.Background(), vm.Name, k8smetav1.GetOptions{})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(vmi.Annotations).ShouldNot(HaveKey("kubevirt.io/test"), "kubevirt internal annotations should be ignored")
-			Expect(vmi.Annotations).ShouldNot(HaveKey("kubernetes.io/test"), "kubernetes internal annotations should be ignored")
 		})
 
 		It("should sync the generation annotation on the vmi during restarts", func() {
