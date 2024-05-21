@@ -274,21 +274,7 @@ var _ = Describe("[rfe_id:1177][crit:medium][vendor:cnv-qe@redhat.com][level:com
 		)
 
 		It("[test_id:3161]should carry annotations to VMI", func() {
-			annotations := map[string]string{
-				"testannotation": "test",
-			}
-
-			vm := createVM(virtClient, libvmifact.NewCirros())
-
-			err = tests.RetryWithMetadataIfModified(vm.ObjectMeta, func(meta k8smetav1.ObjectMeta) error {
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Get(context.Background(), meta.Name, k8smetav1.GetOptions{})
-				Expect(err).ToNot(HaveOccurred())
-				vm.Spec.Template.ObjectMeta.Annotations = annotations
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
-				return err
-			})
-			Expect(err).ToNot(HaveOccurred())
-
+			vm := createVM(virtClient, libvmifact.NewCirros(libvmi.WithAnnotation("testannotation", "test")))
 			vm = startVM(virtClient, vm)
 
 			By("checking for annotations to be present")
@@ -298,22 +284,10 @@ var _ = Describe("[rfe_id:1177][crit:medium][vendor:cnv-qe@redhat.com][level:com
 		})
 
 		It("[test_id:3162]should ignore kubernetes and kubevirt annotations to VMI", func() {
-			annotations := map[string]string{
-				"kubevirt.io/test":   "test",
-				"kubernetes.io/test": "test",
-			}
-
-			vm := createVM(virtClient, libvmifact.NewCirros())
-
-			err = tests.RetryWithMetadataIfModified(vm.ObjectMeta, func(meta k8smetav1.ObjectMeta) error {
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Get(context.Background(), meta.Name, k8smetav1.GetOptions{})
-				Expect(err).ToNot(HaveOccurred())
-				vm.Annotations = annotations
-				vm, err = virtClient.VirtualMachine(meta.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{})
-				return err
-			})
-			Expect(err).ToNot(HaveOccurred())
-
+			vm := createVM(virtClient, libvmifact.NewCirros(
+				libvmi.WithAnnotation("kubevirt.io/test", "test"),
+				libvmi.WithAnnotation("kubernetes.io/test", "test"),
+			))
 			vm = startVM(virtClient, vm)
 
 			By("checking for annotations to not be present")
