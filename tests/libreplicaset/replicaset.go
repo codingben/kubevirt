@@ -13,7 +13,6 @@ import (
 	v1 "kubevirt.io/api/core/v1"
 	"kubevirt.io/client-go/kubecli"
 
-	"kubevirt.io/kubevirt/tests"
 	"kubevirt.io/kubevirt/tests/testsuite"
 )
 
@@ -21,14 +20,10 @@ func DoScaleWithScaleSubresource(virtClient kubecli.KubevirtClient, name string,
 	// Status updates can conflict with our desire to change the spec
 	By(fmt.Sprintf("Scaling to %d", scale))
 	var s *autov1.Scale
-	err := tests.RetryIfModified(func() error {
-		s, err := virtClient.ReplicaSet(testsuite.GetTestNamespace(nil)).GetScale(context.Background(), name, v12.GetOptions{})
-		ExpectWithOffset(1, err).ToNot(HaveOccurred())
-		s.Spec.Replicas = scale
-		s, err = virtClient.ReplicaSet(testsuite.GetTestNamespace(nil)).UpdateScale(context.Background(), name, s)
-		return err
-	})
-
+	s, err := virtClient.ReplicaSet(testsuite.GetTestNamespace(nil)).GetScale(context.Background(), name, v12.GetOptions{})
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	s.Spec.Replicas = scale
+	s, err = virtClient.ReplicaSet(testsuite.GetTestNamespace(nil)).UpdateScale(context.Background(), name, s)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 	By("Checking the number of replicas")
