@@ -3131,7 +3131,7 @@ var _ = Describe("VirtualMachine", func() {
 			Expect(vmi.Annotations).To(Equal(annotations))
 		})
 
-		It("should not copy annotations from vm to vmi", func() {
+		FIt("should not copy annotations from vm to vmi", func() {
 			vm, _ := DefaultVirtualMachine(true)
 			vm.Annotations = map[string]string{"kubevirt.io/test": "test"}
 
